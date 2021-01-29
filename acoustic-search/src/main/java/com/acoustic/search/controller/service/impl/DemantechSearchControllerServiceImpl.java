@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,36 +91,44 @@ public class DemantechSearchControllerServiceImpl implements IDemandTechSearchCo
 		int offset = 0;
 		String query = "";
 		int totalRec = 0;
+		List<EsignASPMaster> searchByCompanyName;
 		
 		try {
 			query = search.getQ();
 			limit = search.getPageSize(); //10 items per page
 			offset = search.getPageNumber() * search.getPageSize(); // 1 * pagePerSize
 			
+			log.debug("query {}", query);
 			log.debug("pageNumber {} pageSize {}", search.getPageNumber(), search.getPageSize());
 			log.debug("query {} limit {} offset {}", query, limit, offset);
 			
-			if(query != null && !query.isEmpty()) {
-				
-				searcList = new ArrayList<>();
-				
-				
-				List<EsignASPMaster> searchByCompanyName = searchDao.searchStartWithCompanyNamePaginate(query.toLowerCase(), limit, offset);
-				
-				if(searchByCompanyName != null & searchByCompanyName.size() > 0 ) {
-					totalRec = searchDao.searchTotalRecordsByCompanyName(query.toLowerCase(), limit, offset);
-					log.debug("total records {}", totalRec);
-				}
-				
-				searcList = searchByCompanyName.stream().map( (EsignASPMaster e) -> {	
-						return new SearchDTO("OK", e.getFirstName() + " " + e.getLastName(), e.getId(), e.getCompanyName());			
-				}).collect(toList());
-				
-				w = new SearchDTOWrapper(searcList, totalRec, 1);
-				
-			}else {
-				throw new InvalidSearchCriteria("ERR101:please provide proper search input!");
+			Optional<String> q = Optional.ofNullable(query);
+			
+			log.debug("q.isPresent() {}", q.isPresent());
+			//log.debug("q.isEmpty() {}", q.get().isEmpty());
+						
+			if(q.isPresent()) {
+				if(query.isEmpty()) throw new InvalidSearchCriteria("ERR101:search input can't be empty string!");
+			} else {
+				throw new InvalidSearchCriteria("ERR102:please provide proper search input!");
 			}
+			
+			log.debug("query length:{}", query.length());
+			
+			searcList = new ArrayList<>();
+			
+			searchByCompanyName = searchDao.searchStartWithCompanyNamePaginate(query.toLowerCase(), limit, offset);
+			
+			if(searchByCompanyName != null & searchByCompanyName.size() > 0 ) {
+				totalRec = searchDao.searchTotalRecordsByCompanyName(query.toLowerCase(), limit, offset);
+				log.debug("total records {}", totalRec);
+			}
+			
+			searcList = searchByCompanyName.stream().map( (EsignASPMaster e) -> {	
+					return new SearchDTO("OK", e.getFirstName() + " " + e.getLastName(), e.getId(), e.getCompanyName());			
+			}).collect(toList());
+			
+			w = new SearchDTOWrapper(searcList, totalRec, 1);
 			
 		} catch (InvalidSearchCriteria e) {
 			searcList = new ArrayList<>();
