@@ -21,7 +21,7 @@ public interface ISearchDAO extends JpaRepository<EsignASPMaster, Integer>{
 	@Query("SELECT e FROM EsignASPMaster e where lower(e.companyName) like ?1%")
 	List<EsignASPMaster> searchStartWithCompanyName(String query);
 	
-	@Query(nativeQuery = true, value =  "SELECT *, count(1) over() as totalRec FROM esp_master  where lower(company_Name) like ?% limit ? offset ?")
+	@Query(nativeQuery = true, value =  "SELECT * FROM esp_master  where lower(company_Name) like ?% limit ? offset ?")
 	List<EsignASPMaster> searchStartWithCompanyNamePaginate(String query, int limit, int offset);
 	
 	@Query(nativeQuery = true, value =  "SELECT count(1) over() as totalRec FROM esp_master  where lower(company_Name) like ?% limit 1")
